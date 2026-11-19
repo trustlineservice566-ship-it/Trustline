@@ -1,0 +1,6 @@
+{
+  "name": "Trustline Collection Services",
+  "description": "Professional B2B debt collection and financial recovery management solutions for banks, NBFCs, and lending institutions across India.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
