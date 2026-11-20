@@ -55,6 +55,11 @@ export const COMPANY_INFO = {
   industry: 'Debt Collection & Financial Recovery',
   founded: '2026',
   businessType: 'B2B Collection Agency',
+  ownerName: 'Ganesh Gejage',
+  ownerRole: 'Founder & Owner',
+  ownerPhone: '+91 9731205566',
+  ownerWhatsappMessage:
+    'Hello Ganesh Gejage, I would like to connect regarding Trustline Collection Services.',
   headquarters: 'Bengaluru, Madavara, Madanayakanahalli 562162, Karnataka, India',
   email: 'Trustlinesrvice566@gmail.com',
   phone: '+91 9731677019',

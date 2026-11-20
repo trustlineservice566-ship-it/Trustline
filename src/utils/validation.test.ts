@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  buildWhatsAppUrl,
   filterJobOpenings,
   generateReferenceId,
   isValidEmail,
@@ -94,5 +95,13 @@ test('filterJobOpenings filters by department or returns all', () => {
   assert.deepEqual(
     filterJobOpenings(sample, 'Field Recovery').map((j) => j.id),
     ['2']
+  );
+});
+
+test('buildWhatsAppUrl generates valid wa.me redirect URL with Indian country code', () => {
+  assert.equal(buildWhatsAppUrl('9731205566'), 'https://wa.me/919731205566');
+  assert.equal(
+    buildWhatsAppUrl('+91 9731205566', 'Hello Ganesh Gejage'),
+    'https://wa.me/919731205566?text=Hello%20Ganesh%20Gejage'
   );
 });

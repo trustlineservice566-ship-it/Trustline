@@ -31,13 +31,13 @@ const VALID_PAGES: PageId[] = [
 
 function getInitialPage(): PageId {
   if (typeof window === 'undefined') return 'home';
-  const hash = window.location.hash.replace('#', '') as PageId;
-  if (VALID_PAGES.includes(hash)) {
-    return hash;
-  }
   const pathSegment = window.location.pathname.replace(/^\/+|\/+$/g, '') as PageId;
   if (VALID_PAGES.includes(pathSegment)) {
     return pathSegment;
+  }
+  const hash = window.location.hash.replace('#', '') as PageId;
+  if (VALID_PAGES.includes(hash)) {
+    return hash;
   }
   return 'home';
 }
@@ -50,16 +50,15 @@ export default function App() {
   const [submittedApplications, setSubmittedApplications] = useState<SubmittedJobApplication[]>([]);
 
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '') as PageId;
-      if (VALID_PAGES.includes(hash)) {
-        setActivePage(hash);
-      } else if (!hash) {
-        setActivePage('home');
-      }
+    const syncRoute = () => {
+      setActivePage(getInitialPage());
     };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', syncRoute);
+    window.addEventListener('hashchange', syncRoute);
+    return () => {
+      window.removeEventListener('popstate', syncRoute);
+      window.removeEventListener('hashchange', syncRoute);
+    };
   }, []);
 
   useEffect(() => {
@@ -78,7 +77,10 @@ export default function App() {
     }
     setActivePage(page);
     if (typeof window !== 'undefined') {
-      window.location.hash = page === 'home' ? '' : page;
+      const targetUrl = page === 'home' ? '/' : `/${page}`;
+      if (window.location.pathname !== targetUrl || window.location.hash) {
+        window.history.pushState(null, '', targetUrl);
+      }
     }
   };
 

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, Clock, Mail, MapPin, Phone } from 'lucide-react';
+import { CheckCircle2, Clock, Mail, MapPin, MessageCircle, Phone, UserCheck } from 'lucide-react';
 import { COMPANY_INFO, INDUSTRIES, SERVICES } from '../data/companyData';
 import {
   ConsultationFormInput,
   FormErrors,
+  buildWhatsAppUrl,
   generateReferenceId,
   validateConsultationForm,
 } from '../utils/validation';
@@ -129,6 +130,18 @@ export const ContactPage: React.FC<ContactPageProps> = ({
 
                 <dl className="mt-6 space-y-5 border-t border-slate-100 pt-6 text-sm">
                   <div className="flex items-start gap-3">
+                    <UserCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#A67C2E]" aria-hidden="true" />
+                    <div>
+                      <dt className="text-xs font-semibold text-slate-500 uppercase">
+                        {COMPANY_INFO.ownerRole}
+                      </dt>
+                      <dd className="mt-0.5 font-semibold text-[#0B1F3A]">
+                        {COMPANY_INFO.ownerName}
+                      </dd>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
                     <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#A67C2E]" aria-hidden="true" />
                     <div>
                       <dt className="text-xs font-semibold text-slate-500 uppercase">
@@ -141,13 +154,21 @@ export const ContactPage: React.FC<ContactPageProps> = ({
                   <div className="flex items-start gap-3">
                     <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[#A67C2E]" aria-hidden="true" />
                     <div>
-                      <dt className="text-xs font-semibold text-slate-500 uppercase">Phone</dt>
-                      <dd className="mt-0.5">
+                      <dt className="text-xs font-semibold text-slate-500 uppercase">
+                        Direct &amp; Office Phone
+                      </dt>
+                      <dd className="mt-0.5 flex flex-col gap-1">
+                        <a
+                          href={`tel:${COMPANY_INFO.ownerPhone.replace(/\s+/g, '')}`}
+                          className="font-medium text-[#0B1F3A] hover:text-[#A67C2E]"
+                        >
+                          {COMPANY_INFO.ownerPhone} ({COMPANY_INFO.ownerName})
+                        </a>
                         <a
                           href={`tel:${COMPANY_INFO.phone.replace(/\s+/g, '')}`}
                           className="font-medium text-[#0B1F3A] hover:text-[#A67C2E]"
                         >
-                          {COMPANY_INFO.phone}
+                          {COMPANY_INFO.phone} (Office Desk)
                         </a>
                       </dd>
                     </div>
@@ -178,6 +199,21 @@ export const ContactPage: React.FC<ContactPageProps> = ({
                     </div>
                   </div>
                 </dl>
+
+                <div className="mt-6 border-t border-slate-100 pt-5">
+                  <a
+                    href={buildWhatsAppUrl(
+                      COMPANY_INFO.ownerPhone,
+                      COMPANY_INFO.ownerWhatsappMessage
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#0B1F3A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#132D52]"
+                  >
+                    <MessageCircle className="h-4 w-4 text-[#D9B05B]" aria-hidden="true" />
+                    <span>Chat on WhatsApp ({COMPANY_INFO.ownerPhone})</span>
+                  </a>
+                </div>
               </div>
 
               {submittedEnquiries.length > 0 && (

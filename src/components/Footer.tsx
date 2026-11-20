@@ -1,7 +1,8 @@
 import React from 'react';
-import { Mail, MapPin, Phone, Clock } from 'lucide-react';
+import { Clock, Mail, MapPin, MessageCircle, Phone, UserCheck } from 'lucide-react';
 import { COMPANY_INFO, PageId } from '../data/companyData';
 import { BrandLogo } from './BrandLogo';
+import { buildWhatsAppUrl } from '../utils/validation';
 
 interface FooterProps {
   onNavigate: (page: PageId) => void;
@@ -89,17 +90,46 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <div className="lg:col-span-4">
             <h2 className="text-sm font-semibold text-white">Bengaluru Headquarters</h2>
             <ul className="mt-4 space-y-3 text-sm">
+              <li className="flex items-center gap-2.5">
+                <UserCheck className="h-4 w-4 shrink-0 text-[#C6973F]" aria-hidden="true" />
+                <span className="text-white font-medium">
+                  {COMPANY_INFO.ownerName} ({COMPANY_INFO.ownerRole})
+                </span>
+              </li>
               <li className="flex items-start gap-2.5">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#C6973F]" aria-hidden="true" />
                 <span className="text-slate-300">{COMPANY_INFO.headquarters}</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone className="h-4 w-4 shrink-0 text-[#C6973F]" aria-hidden="true" />
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-300">
+                  <a
+                    href={`tel:${COMPANY_INFO.ownerPhone.replace(/\s+/g, '')}`}
+                    className="transition-colors hover:text-white"
+                  >
+                    {COMPANY_INFO.ownerPhone}
+                  </a>
+                  <span aria-hidden="true">·</span>
+                  <a
+                    href={`tel:${COMPANY_INFO.phone.replace(/\s+/g, '')}`}
+                    className="transition-colors hover:text-white"
+                  >
+                    {COMPANY_INFO.phone}
+                  </a>
+                </span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <MessageCircle className="h-4 w-4 shrink-0 text-[#C6973F]" aria-hidden="true" />
                 <a
-                  href={`tel:${COMPANY_INFO.phone.replace(/\s+/g, '')}`}
-                  className="text-slate-300 transition-colors hover:text-white"
+                  href={buildWhatsAppUrl(
+                    COMPANY_INFO.ownerPhone,
+                    COMPANY_INFO.ownerWhatsappMessage
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#D9B05B] transition-colors hover:text-white"
                 >
-                  {COMPANY_INFO.phone}
+                  WhatsApp Direct ({COMPANY_INFO.ownerPhone})
                 </a>
               </li>
               <li className="flex items-center gap-2.5">

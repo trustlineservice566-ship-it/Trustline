@@ -109,3 +109,14 @@ export function filterJobOpenings<T extends { department: string }>(
   }
   return jobs.filter((job) => job.department === department);
 }
+
+export function buildWhatsAppUrl(rawPhone: string, message?: string): string {
+  const tenDigit = normalizeIndianPhone(rawPhone);
+  const international = tenDigit.length === 10 ? `91${tenDigit}` : rawPhone.replace(/\D/g, '');
+  const base = `https://wa.me/${international}`;
+  if (message && message.trim().length > 0) {
+    return `${base}?text=${encodeURIComponent(message.trim())}`;
+  }
+  return base;
+}
+

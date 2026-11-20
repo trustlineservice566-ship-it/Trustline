@@ -1,7 +1,8 @@
 import React from 'react';
-import { ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { ArrowRight, CheckCircle2, MessageCircle, ShieldCheck } from 'lucide-react';
 import { COMPANY_INFO, HERO_ASSETS, PageId, WHY_CHOOSE_US } from '../data/companyData';
 import { ImageWithFallback } from '../components/ImageWithFallback';
+import { buildWhatsAppUrl } from '../utils/validation';
 
 interface AboutPageProps {
   onNavigate: (page: PageId) => void;
@@ -49,6 +50,37 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
               </p>
 
               <dl className="mt-8 grid grid-cols-1 gap-4 border-t border-slate-200 pt-6 sm:grid-cols-2">
+                <div>
+                  <dt className="text-xs font-medium text-slate-500 uppercase">
+                    {COMPANY_INFO.ownerRole}
+                  </dt>
+                  <dd className="mt-1 text-sm font-semibold text-[#0B1F3A]">
+                    {COMPANY_INFO.ownerName}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-slate-500 uppercase">Direct Contact</dt>
+                  <dd className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                    <a
+                      href={`tel:${COMPANY_INFO.ownerPhone.replace(/\s+/g, '')}`}
+                      className="font-semibold text-[#0B1F3A] hover:text-[#A67C2E]"
+                    >
+                      {COMPANY_INFO.ownerPhone}
+                    </a>
+                    <a
+                      href={buildWhatsAppUrl(
+                        COMPANY_INFO.ownerPhone,
+                        COMPANY_INFO.ownerWhatsappMessage
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-medium text-[#A67C2E] hover:underline"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span>WhatsApp</span>
+                    </a>
+                  </dd>
+                </div>
                 <div>
                   <dt className="text-xs font-medium text-slate-500 uppercase">Business Model</dt>
                   <dd className="mt-1 text-sm font-semibold text-[#0B1F3A]">

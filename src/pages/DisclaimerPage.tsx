@@ -71,8 +71,9 @@ export const DisclaimerPage: React.FC = () => {
               5. Official Correspondence
             </h2>
             <p className="mt-2">
-              Official communications from {COMPANY_INFO.name} are handled during working hours (
-              {COMPANY_INFO.workingHours}) via {COMPANY_INFO.email} and {COMPANY_INFO.phone}.
+              Official communications from {COMPANY_INFO.name} (Owner: {COMPANY_INFO.ownerName})
+              are handled during working hours ({COMPANY_INFO.workingHours}) via{' '}
+              {COMPANY_INFO.email}, {COMPANY_INFO.ownerPhone}, and {COMPANY_INFO.phone}.
             </p>
           </div>
         </div>

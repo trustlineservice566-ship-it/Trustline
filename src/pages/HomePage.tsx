@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2, MessageCircle } from 'lucide-react';
 import {
   COMPANY_INFO,
   HERO_ASSETS,
@@ -10,6 +10,7 @@ import {
   WHY_CHOOSE_US,
 } from '../data/companyData';
 import { ImageWithFallback } from '../components/ImageWithFallback';
+import { buildWhatsAppUrl } from '../utils/validation';
 
 interface HomePageProps {
   onNavigate: (page: PageId, options?: { serviceTitle?: string; industryName?: string }) => void;
@@ -305,18 +306,33 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 Ready to Improve Recovery Performance Without Compromising Trust?
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-slate-300 sm:text-base">
-                Speak with our Bengaluru leadership team to align on your overdue buckets, SLAs,
-                and reporting requirements.
+                Speak directly with {COMPANY_INFO.ownerName} ({COMPANY_INFO.ownerRole}) and our
+                Bengaluru leadership team to align on your overdue buckets, SLAs, and reporting
+                requirements.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => onNavigate('contact')}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-[#C6973F] px-6 py-3.5 text-sm font-semibold text-[#0B1F3A] transition-colors hover:bg-[#D9B05B] whitespace-nowrap shrink-0"
-            >
-              <span>Request a Business Consultation</span>
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </button>
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => onNavigate('contact')}
+                className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-[#C6973F] px-6 py-3.5 text-sm font-semibold text-[#0B1F3A] transition-colors hover:bg-[#D9B05B] whitespace-nowrap shrink-0"
+              >
+                <span>Request a Business Consultation</span>
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </button>
+              <a
+                href={buildWhatsAppUrl(
+                  COMPANY_INFO.ownerPhone,
+                  COMPANY_INFO.ownerWhatsappMessage
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-md border border-white/25 px-5 py-3.5 text-sm font-medium text-white transition-colors hover:border-white/50 hover:bg-white/5 whitespace-nowrap shrink-0"
+              >
+                <MessageCircle className="h-4 w-4 text-[#D9B05B]" aria-hidden="true" />
+                <span>WhatsApp {COMPANY_INFO.ownerPhone}</span>
+              </a>
+            </div>
           </div>
         </div>
       </section>
