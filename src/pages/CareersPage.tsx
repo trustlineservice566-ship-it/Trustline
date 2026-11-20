@@ -5,9 +5,9 @@ import {
   CareerApplicationInput,
   FormErrors,
   filterJobOpenings,
-  generateReferenceId,
   validateCareerApplication,
 } from '../utils/validation';
+import { createCareerApplication } from '../services/leadsService';
 import { submitToNetlifyForm } from '../utils/netlifyForms';
 
 export interface SubmittedJobApplication {
@@ -20,6 +20,7 @@ export interface SubmittedJobApplication {
 interface CareersPageProps {
   submittedApplications: SubmittedJobApplication[];
   onApplicationSubmitted: (application: SubmittedJobApplication) => void;
+  onTrackReference?: (referenceId?: string) => void;
 }
 
 const DEPARTMENTS = ['All', 'Voice Operations', 'Field Recovery', 'Analytics & MIS'] as const;
@@ -36,11 +37,14 @@ const INITIAL_FORM: CareerApplicationInput = {
 export const CareersPage: React.FC<CareersPageProps> = ({
   submittedApplications,
   onApplicationSubmitted,
+  onTrackReference,
 }) => {
   const [selectedDepartment, setSelectedDepartment] = useState<string>('All');
   const [applyingJob, setApplyingJob] = useState<JobOpening | null>(null);
   const [formState, setFormState] = useState<CareerApplicationInput>(INITIAL_FORM);
   const [errors, setErrors] = useState<FormErrors<CareerApplicationInput>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [latestConfirmation, setLatestConfirmation] =
     useState<SubmittedJobApplication | null>(null);
 
@@ -50,17 +54,20 @@ export const CareersPage: React.FC<CareersPageProps> = ({
     setApplyingJob(job);
     setFormState(INITIAL_FORM);
     setErrors({});
+    setSubmitError('');
     setLatestConfirmation(null);
   };
 
   const closeApplicationForm = () => {
     setApplyingJob(null);
     setErrors({});
+    setSubmitError('');
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!applyingJob) return;
+    setSubmitError('');
 
     const validationErrors = validateCareerApplication(formState);
     if (Object.keys(validationErrors).length > 0) {
@@ -68,30 +75,41 @@ export const CareersPage: React.FC<CareersPageProps> = ({
       return;
     }
 
-    const refId = generateReferenceId('JOB', submittedApplications.length + 1);
-    const record: SubmittedJobApplication = {
-      jobId: applyingJob.id,
-      jobTitle: applyingJob.title,
-      referenceId: refId,
-      applicantName: formState.fullName.trim(),
-    };
+    setSubmitting(true);
+    try {
+      const { referenceId } = await createCareerApplication(
+        formState,
+        applyingJob.id,
+        applyingJob.title
+      );
+      const record: SubmittedJobApplication = {
+        jobId: applyingJob.id,
+        jobTitle: applyingJob.title,
+        referenceId,
+        applicantName: formState.fullName.trim(),
+      };
 
-    void submitToNetlifyForm('career-application', {
-      referenceId: refId,
-      jobTitle: applyingJob.title,
-      fullName: formState.fullName.trim(),
-      email: formState.email.trim(),
-      phone: formState.phone.trim(),
-      experienceYears: formState.experienceYears,
-      preferredLanguage: formState.preferredLanguage.trim(),
-      coverNote: formState.coverNote.trim(),
-    });
+      void submitToNetlifyForm('career-application', {
+        referenceId,
+        jobTitle: applyingJob.title,
+        fullName: formState.fullName.trim(),
+        email: formState.email.trim(),
+        phone: formState.phone.trim(),
+        experienceYears: formState.experienceYears,
+        preferredLanguage: formState.preferredLanguage.trim(),
+        coverNote: formState.coverNote.trim(),
+      });
 
-    onApplicationSubmitted(record);
-    setLatestConfirmation(record);
-    setApplyingJob(null);
-    setFormState(INITIAL_FORM);
-    setErrors({});
+      onApplicationSubmitted(record);
+      setLatestConfirmation(record);
+      setApplyingJob(null);
+      setFormState(INITIAL_FORM);
+      setErrors({});
+    } catch {
+      setSubmitError('Could not submit application right now. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -138,13 +156,24 @@ export const CareersPage: React.FC<CareersPageProps> = ({
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setLatestConfirmation(null)}
-                className="cursor-pointer self-start text-xs font-medium text-emerald-900 underline sm:self-center"
-              >
-                Dismiss
-              </button>
+              <div className="flex flex-wrap items-center gap-3 self-start sm:self-center">
+                {onTrackReference && (
+                  <button
+                    type="button"
+                    onClick={() => onTrackReference(latestConfirmation.referenceId)}
+                    className="cursor-pointer rounded-md bg-emerald-800 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 whitespace-nowrap shrink-0"
+                  >
+                    Track Status
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setLatestConfirmation(null)}
+                  className="cursor-pointer text-xs font-medium text-emerald-900 underline"
+                >
+                  Dismiss
+                </button>
+              </div>
             </div>
           )}
 
@@ -240,11 +269,20 @@ export const CareersPage: React.FC<CareersPageProps> = ({
 
                   <div className="mt-6 flex items-center justify-between gap-4 border-t border-slate-100 pt-4">
                     {existingApplication ? (
-                      <div className="flex items-center gap-2 text-xs font-medium text-emerald-700">
+                      <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-emerald-700">
                         <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                         <span>
                           Application Submitted ({existingApplication.referenceId})
                         </span>
+                        {onTrackReference && (
+                          <button
+                            type="button"
+                            onClick={() => onTrackReference(existingApplication.referenceId)}
+                            className="cursor-pointer font-semibold text-[#0B1F3A] underline hover:text-[#A67C2E]"
+                          >
+                            Track
+                          </button>
+                        )}
                       </div>
                     ) : (
                       <span className="text-xs text-slate-500">Immediate joining preferred</span>
@@ -422,6 +460,12 @@ export const CareersPage: React.FC<CareersPageProps> = ({
                 />
               </div>
 
+              {submitError && (
+                <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+                  {submitError}
+                </div>
+              )}
+
               <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-4">
                 <button
                   type="button"
@@ -432,9 +476,10 @@ export const CareersPage: React.FC<CareersPageProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="cursor-pointer rounded-md bg-[#0B1F3A] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#132D52]"
+                  disabled={submitting}
+                  className="cursor-pointer rounded-md bg-[#0B1F3A] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#132D52] disabled:opacity-60"
                 >
-                  Submit Application
+                  {submitting ? 'Submitting...' : 'Submit Application'}
                 </button>
               </div>
             </form>

@@ -1,0 +1,409 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: deny everything unless explicitly permitted
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 2 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidTrackingReferenceId(refId) {
+      return refId is string &&
+        refId.size() >= 13 &&
+        refId.size() <= 24 &&
+        refId.matches('^(TCS|JOB)-2026-[0-9]{4,12}$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isBootstrappedAdmin() {
+      return isEmailVerified() && request.auth.token.email == 'trustlineservice566@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || (
+        isEmailVerified() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidEnquiryStatus(status) {
+      return status in ['New', 'Contacted', 'In Discussion', 'Converted', 'Closed'];
+    }
+
+    function isValidApplicationStatus(status) {
+      return status in ['New', 'Shortlisted', 'Interviewed', 'Hired', 'Archived'];
+    }
+
+    function isValidConsultationEnquiryCreate(data) {
+      return data.keys().hasAll([
+          'referenceId',
+          'fullName',
+          'companyName',
+          'email',
+          'phone',
+          'industry',
+          'service',
+          'message',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'referenceId',
+          'fullName',
+          'companyName',
+          'email',
+          'phone',
+          'industry',
+          'service',
+          'message',
+          'status',
+          'notes',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.referenceId is string &&
+        data.referenceId.size() >= 13 &&
+        data.referenceId.size() <= 24 &&
+        data.referenceId.matches('^TCS-2026-[0-9]{4,12}$') &&
+        data.fullName is string &&
+        data.fullName.size() >= 2 &&
+        data.fullName.size() <= 100 &&
+        data.companyName is string &&
+        data.companyName.size() >= 2 &&
+        data.companyName.size() <= 140 &&
+        data.email is string &&
+        data.email.size() >= 5 &&
+        data.email.size() <= 160 &&
+        data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$') &&
+        data.phone is string &&
+        data.phone.size() >= 10 &&
+        data.phone.size() <= 20 &&
+        data.industry is string &&
+        data.industry.size() >= 2 &&
+        data.industry.size() <= 80 &&
+        data['service'] is string &&
+        data['service'].size() >= 2 &&
+        data['service'].size() <= 100 &&
+        data.message is string &&
+        data.message.size() >= 15 &&
+        data.message.size() <= 2000 &&
+        data.status == 'New' &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000)) &&
+        data.createdAt is timestamp &&
+        data.createdAt == request.time &&
+        data.updatedAt is timestamp &&
+        data.updatedAt == request.time;
+    }
+
+    function isValidConsultationEnquiryUpdate(data) {
+      return data.keys().hasAll([
+          'referenceId',
+          'fullName',
+          'companyName',
+          'email',
+          'phone',
+          'industry',
+          'service',
+          'message',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'referenceId',
+          'fullName',
+          'companyName',
+          'email',
+          'phone',
+          'industry',
+          'service',
+          'message',
+          'status',
+          'notes',
+          'publicUpdate',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.referenceId == existing().referenceId &&
+        data.fullName == existing().fullName &&
+        data.companyName == existing().companyName &&
+        data.email == existing().email &&
+        data.phone == existing().phone &&
+        data.industry == existing().industry &&
+        data['service'] == existing()['service'] &&
+        data.message == existing().message &&
+        data.createdAt == existing().createdAt &&
+        isValidEnquiryStatus(data.status) &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000)) &&
+        (!('publicUpdate' in data) || (data.publicUpdate is string && data.publicUpdate.size() <= 300)) &&
+        data.updatedAt is timestamp &&
+        data.updatedAt == request.time;
+    }
+
+    function isValidCareerApplicationCreate(data) {
+      return data.keys().hasAll([
+          'referenceId',
+          'jobId',
+          'jobTitle',
+          'fullName',
+          'email',
+          'phone',
+          'experienceYears',
+          'preferredLanguage',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'referenceId',
+          'jobId',
+          'jobTitle',
+          'fullName',
+          'email',
+          'phone',
+          'experienceYears',
+          'preferredLanguage',
+          'coverNote',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.referenceId is string &&
+        data.referenceId.size() >= 13 &&
+        data.referenceId.size() <= 24 &&
+        data.referenceId.matches('^JOB-2026-[0-9]{4,12}$') &&
+        data.jobId is string &&
+        data.jobId.size() >= 2 &&
+        data.jobId.size() <= 64 &&
+        data.jobId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.jobTitle is string &&
+        data.jobTitle.size() >= 2 &&
+        data.jobTitle.size() <= 120 &&
+        data.fullName is string &&
+        data.fullName.size() >= 2 &&
+        data.fullName.size() <= 100 &&
+        data.email is string &&
+        data.email.size() >= 5 &&
+        data.email.size() <= 160 &&
+        data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$') &&
+        data.phone is string &&
+        data.phone.size() >= 10 &&
+        data.phone.size() <= 20 &&
+        data.experienceYears is string &&
+        data.experienceYears.size() >= 1 &&
+        data.experienceYears.size() <= 40 &&
+        data.preferredLanguage is string &&
+        data.preferredLanguage.size() >= 2 &&
+        data.preferredLanguage.size() <= 120 &&
+        (!('coverNote' in data) || (data.coverNote is string && data.coverNote.size() <= 2000)) &&
+        data.status == 'New' &&
+        data.createdAt is timestamp &&
+        data.createdAt == request.time &&
+        data.updatedAt is timestamp &&
+        data.updatedAt == request.time;
+    }
+
+    function isValidCareerApplicationUpdate(data) {
+      return data.keys().hasAll([
+          'referenceId',
+          'jobId',
+          'jobTitle',
+          'fullName',
+          'email',
+          'phone',
+          'experienceYears',
+          'preferredLanguage',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'referenceId',
+          'jobId',
+          'jobTitle',
+          'fullName',
+          'email',
+          'phone',
+          'experienceYears',
+          'preferredLanguage',
+          'coverNote',
+          'status',
+          'publicUpdate',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.referenceId == existing().referenceId &&
+        data.jobId == existing().jobId &&
+        data.jobTitle == existing().jobTitle &&
+        data.fullName == existing().fullName &&
+        data.email == existing().email &&
+        data.phone == existing().phone &&
+        data.experienceYears == existing().experienceYears &&
+        data.preferredLanguage == existing().preferredLanguage &&
+        (!('coverNote' in data) || (data.coverNote is string && data.coverNote.size() <= 2000)) &&
+        data.createdAt == existing().createdAt &&
+        isValidApplicationStatus(data.status) &&
+        (!('publicUpdate' in data) || (data.publicUpdate is string && data.publicUpdate.size() <= 300)) &&
+        data.updatedAt is timestamp &&
+        data.updatedAt == request.time;
+    }
+
+    function isValidEnquiryStatusBase(data, pathRefId) {
+      return data.keys().hasAll([
+          'referenceId',
+          'sourceId',
+          'recordType',
+          'categoryLabel',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'referenceId',
+          'sourceId',
+          'recordType',
+          'categoryLabel',
+          'status',
+          'publicUpdate',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.referenceId == pathRefId &&
+        data.sourceId is string &&
+        data.sourceId.size() >= 10 &&
+        data.sourceId.size() <= 64 &&
+        data.sourceId.matches('^(enq|app)_[0-9]+_[0-9]+$') &&
+        data.recordType in ['enquiry', 'application'] &&
+        data.categoryLabel is string &&
+        data.categoryLabel.size() >= 2 &&
+        data.categoryLabel.size() <= 180 &&
+        (
+          (data.recordType == 'enquiry' && isValidEnquiryStatus(data.status)) ||
+          (data.recordType == 'application' && isValidApplicationStatus(data.status))
+        ) &&
+        (!('publicUpdate' in data) || (data.publicUpdate is string && data.publicUpdate.size() <= 300)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidEnquiryStatusPublicCreate(data, pathRefId) {
+      return isValidEnquiryStatusBase(data, pathRefId) &&
+        data.status == 'New' &&
+        !('publicUpdate' in data) &&
+        data.createdAt == request.time &&
+        data.updatedAt == request.time;
+    }
+
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['email', 'displayName', 'role', 'createdAt']) &&
+        data.keys().hasOnly(['email', 'displayName', 'role', 'createdAt']) &&
+        data.email is string &&
+        data.email.size() >= 5 &&
+        data.email.size() <= 160 &&
+        data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$') &&
+        data.displayName is string &&
+        data.displayName.size() >= 2 &&
+        data.displayName.size() <= 100 &&
+        data.role in ['owner', 'manager'] &&
+        data.createdAt is timestamp;
+    }
+
+    // B2B Consultation Enquiries: public create, admin-only read/update/delete
+    match /enquiries/{enquiryId} {
+      allow create: if isValidId(enquiryId) && isValidConsultationEnquiryCreate(incoming());
+      allow get: if isValidId(enquiryId) && isAdmin();
+      allow list: if isAdmin();
+      allow update: if isValidId(enquiryId) &&
+        isAdmin() &&
+        isValidConsultationEnquiryUpdate(incoming()) &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes', 'publicUpdate', 'updatedAt']);
+      allow delete: if isValidId(enquiryId) && isAdmin();
+    }
+
+    // Career Applications: public create, admin-only read/update/delete
+    match /applications/{applicationId} {
+      allow create: if isValidId(applicationId) && isValidCareerApplicationCreate(incoming());
+      allow get: if isValidId(applicationId) && isAdmin();
+      allow list: if isAdmin();
+      allow update: if isValidId(applicationId) &&
+        isAdmin() &&
+        isValidCareerApplicationUpdate(incoming()) &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'publicUpdate', 'updatedAt']);
+      allow delete: if isValidId(applicationId) && isAdmin();
+    }
+
+    // PII-free Public Status Tracking: direct get by Reference ID, atomic batch create, admin-only list/update/delete
+    match /enquiry_status/{referenceId} {
+      allow get: if isValidTrackingReferenceId(referenceId);
+      allow list: if isAdmin();
+      allow create: if isValidTrackingReferenceId(referenceId) && (
+        (
+          isAdmin() &&
+          isValidEnquiryStatusBase(incoming(), referenceId) &&
+          incoming().updatedAt == request.time
+        ) || (
+          isValidEnquiryStatusPublicCreate(incoming(), referenceId) && (
+            (
+              incoming().recordType == 'enquiry' &&
+              existsAfter(/databases/$(database)/documents/enquiries/$(incoming().sourceId)) &&
+              getAfter(/databases/$(database)/documents/enquiries/$(incoming().sourceId)).data.referenceId == referenceId &&
+              getAfter(/databases/$(database)/documents/enquiries/$(incoming().sourceId)).data.createdAt == request.time
+            ) || (
+              incoming().recordType == 'application' &&
+              existsAfter(/databases/$(database)/documents/applications/$(incoming().sourceId)) &&
+              getAfter(/databases/$(database)/documents/applications/$(incoming().sourceId)).data.referenceId == referenceId &&
+              getAfter(/databases/$(database)/documents/applications/$(incoming().sourceId)).data.createdAt == request.time
+            )
+          )
+        )
+      );
+      allow update: if isValidTrackingReferenceId(referenceId) &&
+        isAdmin() &&
+        isValidEnquiryStatusBase(incoming(), referenceId) &&
+        incoming().referenceId == existing().referenceId &&
+        incoming().sourceId == existing().sourceId &&
+        incoming().recordType == existing().recordType &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'publicUpdate', 'updatedAt']);
+      allow delete: if isValidTrackingReferenceId(referenceId) && isAdmin();
+    }
+
+    // Admins collection: strictly admin-managed
+    match /admins/{adminUid} {
+      allow get: if isValidId(adminUid) && (isAdmin() || (isEmailVerified() && request.auth.uid == adminUid));
+      allow list: if isAdmin();
+      allow create: if isValidId(adminUid) &&
+        isBootstrappedAdmin() &&
+        isValidAdminUser(incoming()) &&
+        incoming().createdAt == request.time;
+      allow update: if isValidId(adminUid) &&
+        isBootstrappedAdmin() &&
+        isValidAdminUser(incoming()) &&
+        incoming().email == existing().email &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'role']);
+      allow delete: if isValidId(adminUid) && isBootstrappedAdmin();
+    }
+  }
+}

@@ -24,6 +24,7 @@ const MOBILE_ALL_NAV: { id: PageId; label: string }[] = [
   { id: 'process', label: 'Our Process' },
   { id: 'careers', label: 'Careers' },
   { id: 'contact', label: 'Contact Us' },
+  { id: 'track', label: 'Track Inquiry' },
   { id: 'privacy', label: 'Privacy Policy' },
   { id: 'disclaimer', label: 'Disclaimer' },
 ];

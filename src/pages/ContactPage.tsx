@@ -5,9 +5,9 @@ import {
   ConsultationFormInput,
   FormErrors,
   buildWhatsAppUrl,
-  generateReferenceId,
   validateConsultationForm,
 } from '../utils/validation';
+import { createConsultationEnquiry } from '../services/leadsService';
 import { submitToNetlifyForm } from '../utils/netlifyForms';
 
 export interface SubmittedEnquiry {
@@ -24,6 +24,7 @@ interface ContactPageProps {
   preselectedIndustry?: string;
   submittedEnquiries: SubmittedEnquiry[];
   onEnquirySubmitted: (enquiry: SubmittedEnquiry) => void;
+  onTrackReference?: (referenceId?: string) => void;
 }
 
 export const ContactPage: React.FC<ContactPageProps> = ({
@@ -31,6 +32,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({
   preselectedIndustry = '',
   submittedEnquiries,
   onEnquirySubmitted,
+  onTrackReference,
 }) => {
   const [formState, setFormState] = useState<ConsultationFormInput>({
     fullName: '',
@@ -43,6 +45,8 @@ export const ContactPage: React.FC<ContactPageProps> = ({
   });
   const [errors, setErrors] = useState<FormErrors<ConsultationFormInput>>({});
   const [confirmation, setConfirmation] = useState<SubmittedEnquiry | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
     setFormState((prev) => ({
@@ -52,50 +56,63 @@ export const ContactPage: React.FC<ContactPageProps> = ({
     }));
   }, [preselectedIndustry, preselectedService]);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setSubmitError('');
     const validationErrors = validateConsultationForm(formState);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
 
-    const refId = generateReferenceId('TCS', submittedEnquiries.length + 1);
-    const record: SubmittedEnquiry = {
-      referenceId: refId,
-      fullName: formState.fullName.trim(),
-      companyName: formState.companyName.trim(),
-      industry: formState.industry,
-      service: formState.service,
-      submittedAt: new Date().toLocaleTimeString('en-IN', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    };
+    setSubmitting(true);
+    try {
+      const { referenceId } = await createConsultationEnquiry(formState);
 
-    void submitToNetlifyForm('business-consultation', {
-      referenceId: refId,
-      fullName: formState.fullName.trim(),
-      companyName: formState.companyName.trim(),
-      email: formState.email.trim(),
-      phone: formState.phone.trim(),
-      industry: formState.industry,
-      service: formState.service,
-      message: formState.message.trim(),
-    });
+      const record: SubmittedEnquiry = {
+        referenceId,
+        fullName: formState.fullName.trim(),
+        companyName: formState.companyName.trim(),
+        industry: formState.industry,
+        service: formState.service,
+        submittedAt: new Date().toLocaleTimeString('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+      };
 
-    onEnquirySubmitted(record);
-    setConfirmation(record);
-    setErrors({});
-    setFormState({
-      fullName: '',
-      companyName: '',
-      email: '',
-      phone: '',
-      industry: '',
-      service: '',
-      message: '',
-    });
+      void submitToNetlifyForm('business-consultation', {
+        referenceId,
+        fullName: formState.fullName.trim(),
+        companyName: formState.companyName.trim(),
+        email: formState.email.trim(),
+        phone: formState.phone.trim(),
+        industry: formState.industry,
+        service: formState.service,
+        message: formState.message.trim(),
+      });
+
+      onEnquirySubmitted(record);
+      setConfirmation(record);
+      setErrors({});
+      setFormState({
+        fullName: '',
+        companyName: '',
+        email: '',
+        phone: '',
+        industry: '',
+        service: '',
+        message: '',
+      });
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error
+          ? 'Could not save your enquiry right now. Please try again or reach us directly on WhatsApp.'
+          : 'Submission failed.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -223,16 +240,27 @@ export const ContactPage: React.FC<ContactPageProps> = ({
                   </h3>
                   <ul className="mt-3 divide-y divide-slate-100 text-xs">
                     {submittedEnquiries.map((item) => (
-                      <li key={item.referenceId} className="py-2.5">
-                        <p className="font-mono font-semibold text-[#A67C2E]">
-                          {item.referenceId}
-                        </p>
-                        <p className="mt-0.5 font-medium text-[#0B1F3A]">
-                          {item.companyName} · {item.service}
-                        </p>
-                        <p className="text-slate-500">
-                          {item.industry} · Logged at {item.submittedAt}
-                        </p>
+                      <li key={item.referenceId} className="flex items-start justify-between gap-3 py-2.5">
+                        <div>
+                          <p className="font-mono font-semibold text-[#A67C2E]">
+                            {item.referenceId}
+                          </p>
+                          <p className="mt-0.5 font-medium text-[#0B1F3A]">
+                            {item.companyName} · {item.service}
+                          </p>
+                          <p className="text-slate-500">
+                            {item.industry} · Logged at {item.submittedAt}
+                          </p>
+                        </div>
+                        {onTrackReference && (
+                          <button
+                            type="button"
+                            onClick={() => onTrackReference(item.referenceId)}
+                            className="cursor-pointer rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-[#0B1F3A] hover:border-[#C6973F] hover:bg-slate-50 whitespace-nowrap shrink-0"
+                          >
+                            Track
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -272,23 +300,45 @@ export const ContactPage: React.FC<ContactPageProps> = ({
                       <p>1. Dedicated account manager reviews your {confirmation.industry} scope.</p>
                       <p>2. Discovery call scheduled to align on DPD buckets, SLAs, and MIS format.</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmation(null)}
-                      className="mt-6 cursor-pointer rounded-md bg-[#0B1F3A] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#132D52]"
-                    >
-                      Submit Another Enquiry
-                    </button>
+                    <div className="mt-6 flex flex-wrap items-center gap-3">
+                      {onTrackReference && (
+                        <button
+                          type="button"
+                          onClick={() => onTrackReference(confirmation.referenceId)}
+                          className="cursor-pointer rounded-md bg-[#0B1F3A] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#132D52]"
+                        >
+                          Track Enquiry Status
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setConfirmation(null)}
+                        className="cursor-pointer rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-[#0B1F3A] transition-colors hover:bg-slate-50"
+                      >
+                        Submit Another Enquiry
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} noValidate className="space-y-5">
-                    <div>
-                      <h2 className="text-xl font-semibold text-[#0B1F3A]">
-                        Institutional Enquiry Form
-                      </h2>
-                      <p className="mt-1 text-xs text-slate-500">
-                        Fields marked with * are required for B2B consultation scheduling.
-                      </p>
+                    <div className="flex flex-col justify-between gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center">
+                      <div>
+                        <h2 className="text-xl font-semibold text-[#0B1F3A]">
+                          Institutional Enquiry Form
+                        </h2>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Fields marked with * are required for B2B consultation scheduling.
+                        </p>
+                      </div>
+                      {onTrackReference && (
+                        <button
+                          type="button"
+                          onClick={() => onTrackReference()}
+                          className="cursor-pointer self-start rounded-md border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-[#0B1F3A] transition-colors hover:border-[#C6973F] hover:bg-slate-50 sm:self-center whitespace-nowrap shrink-0"
+                        >
+                          Track Existing Enquiry
+                        </button>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -483,12 +533,19 @@ export const ContactPage: React.FC<ContactPageProps> = ({
                       )}
                     </div>
 
+                    {submitError && (
+                      <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+                        {submitError}
+                      </div>
+                    )}
+
                     <div className="pt-2">
                       <button
                         type="submit"
-                        className="w-full cursor-pointer rounded-md bg-[#0B1F3A] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#132D52] sm:w-auto"
+                        disabled={submitting}
+                        className="w-full cursor-pointer rounded-md bg-[#0B1F3A] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#132D52] disabled:opacity-60 sm:w-auto"
                       >
-                        Submit Consultation Request
+                        {submitting ? 'Submitting Request...' : 'Submit Consultation Request'}
                       </button>
                     </div>
                   </form>

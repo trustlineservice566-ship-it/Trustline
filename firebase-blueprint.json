@@ -1,0 +1,316 @@
+{
+  "entities": {
+    "ConsultationEnquiry": {
+      "title": "ConsultationEnquiry",
+      "description": "B2B debt collection and financial recovery consultation enquiry submitted by banks, NBFCs, or lending companies.",
+      "type": "object",
+      "properties": {
+        "referenceId": {
+          "type": "string",
+          "pattern": "^TCS-2026-[0-9]{4,12}$",
+          "minLength": 13,
+          "maxLength": 24,
+          "description": "Unique client-facing enquiry reference identifier."
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Full name of the institutional contact person."
+        },
+        "companyName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 140,
+          "description": "Bank, NBFC, or lending institution name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Business email address."
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 20,
+          "description": "Contact phone number."
+        },
+        "industry": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Financial industry vertical."
+        },
+        "service": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Primary requested recovery service."
+        },
+        "message": {
+          "type": "string",
+          "minLength": 15,
+          "maxLength": 2000,
+          "description": "Portfolio details, DPD buckets, or enquiry notes."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["New", "Contacted", "In Discussion", "Converted", "Closed"],
+          "description": "Lead pipeline status."
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Internal follow-up notes added by the owner."
+        },
+        "publicUpdate": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Optional non-PII status update shared on the public tracking page."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the enquiry was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the enquiry was last updated."
+        }
+      },
+      "required": [
+        "referenceId",
+        "fullName",
+        "companyName",
+        "email",
+        "phone",
+        "industry",
+        "service",
+        "message",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CareerApplication": {
+      "title": "CareerApplication",
+      "description": "Job application submitted through the Trustline Careers portal.",
+      "type": "object",
+      "properties": {
+        "referenceId": {
+          "type": "string",
+          "pattern": "^JOB-2026-[0-9]{4,12}$",
+          "minLength": 13,
+          "maxLength": 24,
+          "description": "Unique candidate application reference identifier."
+        },
+        "jobId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 2,
+          "maxLength": 64,
+          "description": "Identifier of the role applied for."
+        },
+        "jobTitle": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Role title."
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Applicant full name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Applicant email address."
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 20,
+          "description": "Applicant mobile number."
+        },
+        "experienceYears": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "description": "Selected experience range."
+        },
+        "preferredLanguage": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Languages spoken fluently."
+        },
+        "coverNote": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Optional brief experience summary."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["New", "Shortlisted", "Interviewed", "Hired", "Archived"],
+          "description": "Candidate review status."
+        },
+        "publicUpdate": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Optional non-PII application update shared on the public tracking page."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the application was submitted."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the application was last updated."
+        }
+      },
+      "required": [
+        "referenceId",
+        "jobId",
+        "jobTitle",
+        "fullName",
+        "email",
+        "phone",
+        "experienceYears",
+        "preferredLanguage",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "EnquiryStatusTrack": {
+      "title": "EnquiryStatusTrack",
+      "description": "PII-free public status tracking record keyed by client Reference ID.",
+      "type": "object",
+      "properties": {
+        "referenceId": {
+          "type": "string",
+          "pattern": "^(TCS|JOB)-2026-[0-9]{4,12}$",
+          "minLength": 13,
+          "maxLength": 24,
+          "description": "Unique tracking reference ID."
+        },
+        "sourceId": {
+          "type": "string",
+          "pattern": "^(enq|app)_[0-9]+_[0-9]+$",
+          "minLength": 10,
+          "maxLength": 64,
+          "description": "Opaque parent document identifier."
+        },
+        "recordType": {
+          "type": "string",
+          "enum": ["enquiry", "application"],
+          "description": "Source record type."
+        },
+        "categoryLabel": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 180,
+          "description": "Non-PII service/industry or job role label."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "New",
+            "Contacted",
+            "In Discussion",
+            "Converted",
+            "Closed",
+            "Shortlisted",
+            "Interviewed",
+            "Hired",
+            "Archived"
+          ],
+          "description": "Current processing stage."
+        },
+        "publicUpdate": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Optional non-PII milestone note visible on the tracking page."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when last updated."
+        }
+      },
+      "required": [
+        "referenceId",
+        "sourceId",
+        "recordType",
+        "categoryLabel",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized Trustline owner or operations lead permitted to view and manage enquiries.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 160,
+          "description": "Verified Google account email."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Admin display name."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["owner", "manager"],
+          "description": "Admin role level."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when admin access was added."
+        }
+      },
+      "required": ["email", "displayName", "role", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/enquiries/{enquiryId}": {
+      "schema": { "$ref": "#/entities/ConsultationEnquiry" },
+      "description": "Stores B2B consultation enquiries submitted by prospective financial institution clients."
+    },
+    "/applications/{applicationId}": {
+      "schema": { "$ref": "#/entities/CareerApplication" },
+      "description": "Stores job applications submitted through the Trustline Careers page."
+    },
+    "/enquiry_status/{referenceId}": {
+      "schema": { "$ref": "#/entities/EnquiryStatusTrack" },
+      "description": "Stores PII-free public status tracking records keyed by Reference ID."
+    },
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Authoritative access-control documents for Trustline administrators."
+    }
+  }
+}

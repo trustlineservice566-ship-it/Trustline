@@ -20,6 +20,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   const governanceLinks: { id: PageId; label: string }[] = [
     { id: 'careers', label: 'Careers' },
     { id: 'contact', label: 'Contact Us' },
+    { id: 'track', label: 'Track Inquiry' },
+    { id: 'leads', label: 'Leads Portal' },
     { id: 'privacy', label: 'Privacy Policy' },
     { id: 'disclaimer', label: 'Disclaimer' },
   ];

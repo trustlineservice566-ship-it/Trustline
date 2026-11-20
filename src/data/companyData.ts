@@ -6,6 +6,8 @@ export type PageId =
   | 'process'
   | 'careers'
   | 'contact'
+  | 'track'
+  | 'leads'
   | 'privacy'
   | 'disclaimer';
 
